@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Birthday Rocket Launch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
             margin: 0;
@@ -49,7 +50,8 @@
         }
         
         .rocket {
-            width: 400px;
+            width: 60vw;
+            max-width: 400px;
             position: relative;
             z-index: 2;
             transition: transform 0.5s ease-out;
@@ -201,6 +203,59 @@
         @keyframes fall {
             to { transform: translateY(100vh); }
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .rocket {
+                width: 50vw;
+            }
+            
+            .message {
+                font-size: 6vw;
+                top: 15%;
+            }
+            
+            button {
+                padding: 12px 24px;
+                font-size: 18px;
+            }
+            
+            .star {
+                font-size: 14px;
+            }
+            
+            .star-column {
+                width: 1px;
+            }
+            
+            .fire {
+                width: 60px;
+            }
+            
+            .smoke {
+                width: 90px;
+            }
+            
+            .rocket-container {
+                bottom: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message {
+                font-size: 7vw;
+                top: 10%;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+            }
+            
+            .rocket {
+                width: 65vw;
+            }
+        }
     </style>
 </head>
 <body>
@@ -260,14 +315,15 @@
         function createStarRain() {
             starRain.innerHTML = '';
             
-            // Create columns of falling stars
-            const columnCount = Math.floor(window.innerWidth / 30);
+            // Adjust column spacing based on screen size
+            const columnSpacing = window.innerWidth < 768 ? 40 : 30;
+            const columnCount = Math.floor(window.innerWidth / columnSpacing);
             const stars = ['✦'];
             
             for (let i = 0; i < columnCount; i++) {
                 const column = document.createElement('div');
                 column.classList.add('star-column');
-                column.style.left = `${(i * 30) + Math.random() * 10}px`;
+                column.style.left = `${(i * columnSpacing) + Math.random() * 10}px`;
                 
                 // Random delay for each column
                 const delay = Math.random() * 5;
