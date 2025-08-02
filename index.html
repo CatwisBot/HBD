@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Birthday Rocket Launch</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            transition: background 2s ease-in-out;
+        }
+        
+        /* Earth view */
+        .sky {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('Langit.png') center/cover;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        /* Space view */
+        .space {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            opacity: 0;
+            z-index: -1;
+        }
+        
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            background: url('Ground.png') center/cover;
+            transition: opacity 1s ease-in;
+        }
+        
+        .rocket-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 3s ease-in;
+            z-index: 10;
+        }
+        
+        .rocket {
+            width: 400px;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.5s ease-out;
+        }
+        
+        /* Vibration effect class */
+        .vibrate {
+            animation: vibrate 0.3s infinite;
+        }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-51%) translateY(-1px); }
+            50% { transform: translateX(-50%) translateY(1px); }
+            75% { transform: translateX(-49%) translateY(0); }
+        }
+        
+        /* Fire animation (initially off) */
+        .fire {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 0;
+            background: linear-gradient(to top, orange, red);
+            border-radius: 0 0 40px 40px;
+            filter: blur(5px);
+            z-index: 1;
+            opacity: 0;
+            transition: all 0.5s ease-out;
+            animation: fireVibrate 0.1s infinite;
+        }
+        
+        @keyframes fireVibrate {
+            0%, 100% { transform: translateX(-50%) scaleY(1); }
+            50% { transform: translateX(-50%) scaleY(1.2); }
+        }
+        
+        /* Smoke animation */
+        .smoke {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 0;
+            background: white;
+            border-radius: 50%;
+            filter: blur(15px);
+            opacity: 0;
+            z-index: 0;
+            transition: all 1.5s ease-out;
+        }
+        
+        .smoke-particle {
+            position: absolute;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            filter: blur(5px);
+            opacity: 0;
+        }
+        
+        .clouds {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transition: opacity 1.5s ease-in;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            filter: blur(3px);
+        }
+        
+        button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #FF5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .message {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+            color: #FF5722;
+            opacity: 0;
+            transition: opacity 1s;
+            text-align: center;
+            text-shadow: 2px 2px 4px white;
+            z-index: 5;
+            animation: messageVibrate 0.5s infinite;
+        }
+        
+        @keyframes messageVibrate {
+            0%, 100% { transform: translateX(-50%) rotate(0.5deg); }
+            50% { transform: translateX(-50%) rotate(-0.5deg); }
+        }
+        
+        /* Matrix-style star rain */
+        .star-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 2s;
+            overflow: hidden;
+        }
+        
+        .star-column {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .star {
+            color: white;
+            text-shadow: 0 0 5px cyan;
+            font-size: 18px;
+            animation: fall linear infinite;
+            opacity: 0.8;
+        }
+        
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+    </style>
+</head>
+<body>
+    <div class="sky" id="sky"></div>
+    <div class="space" id="space"></div>
+    <div class="star-rain" id="starRain"></div>
+    <div class="clouds" id="clouds"></div>
+    <div class="ground" id="ground"></div>
+    
+    <div class="rocket-container" id="rocketContainer">
+        <div class="smoke" id="smoke"></div>
+        <div class="fire" id="fire"></div>
+        <img src="roket.png" class="rocket" id="rocket">
+    </div>
+    
+    <button id="launchBtn">LAUNCH ROCKET 🚀</button>
+    <div class="message" id="message">HAPPY BIRTHDAY!<br>REVANNA</div>
+
+    <script>
+        // Create moving clouds
+        const cloudsContainer = document.getElementById('clouds');
+        function createClouds() {
+            for (let i = 0; i < 15; i++) {
+                const cloud = document.createElement('div');
+                cloud.classList.add('cloud');
+                
+                const size = Math.random() * 120 + 30;
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * (window.innerHeight * 0.7);
+                const speed = Math.random() * 2 + 0.7;
+                const opacity = Math.random() * 0.7 + 0.7;
+                
+                cloud.style.width = `${size}px`;
+                cloud.style.height = `${size * 0.5}px`;
+                cloud.style.left = `${posX}px`;
+                cloud.style.top = `${posY}px`;
+                cloud.style.opacity = opacity;
+                
+                cloudsContainer.appendChild(cloud);
+                
+                function moveCloud() {
+                    const currentX = parseFloat(cloud.style.left);
+                    cloud.style.left = `${currentX + speed}px`;
+                    
+                    if (currentX > window.innerWidth) {
+                        cloud.style.left = `-${size}px`;
+                        cloud.style.top = `${Math.random() * (window.innerHeight * 0.7)}px`;
+                    }
+                    requestAnimationFrame(moveCloud);
+                }
+                moveCloud();
+            }
+        }
+        
+        // Create Matrix-style star rain
+        const starRain = document.getElementById('starRain');
+        function createStarRain() {
+            starRain.innerHTML = '';
+            
+            // Create columns of falling stars
+            const columnCount = Math.floor(window.innerWidth / 30);
+            const stars = ['✦'];
+            
+            for (let i = 0; i < columnCount; i++) {
+                const column = document.createElement('div');
+                column.classList.add('star-column');
+                column.style.left = `${(i * 30) + Math.random() * 10}px`;
+                
+                // Random delay for each column
+                const delay = Math.random() * 5;
+                column.style.animationDelay = `${delay}s`;
+                
+                // Create stars in column
+                const starCount = Math.floor(Math.random() * 3) + 5;
+                for (let j = 0; j < starCount; j++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    star.textContent = stars[Math.floor(Math.random() * stars.length)];
+                    
+                    // Random properties
+                    const duration = Math.random() * 3 + 1;
+                    const starDelay = Math.random() * 3;
+                    const opacity = Math.random() * 0.7 + 0.3;
+                    
+                    star.style.animationDuration = `${duration}s`;
+                    star.style.animationDelay = `${starDelay}s`;
+                    star.style.opacity = opacity;
+                    star.style.color = `hsl(${Math.random() * 60 + 180}, 100%, ${Math.random() * 30 + 70}%)`;
+                    
+                    column.appendChild(star);
+                }
+                
+                starRain.appendChild(column);
+            }
+        }
+        
+        // Create smoke particles
+        function createSmokeParticles() {
+            const smoke = document.getElementById('smoke');
+            smoke.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('smoke-particle');
+                
+                const size = Math.random() * 40 + 20;
+                const posX = (Math.random() * 120) - 60;
+                const duration = Math.random() * 3 + 2;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}px`;
+                particle.style.bottom = '0';
+                particle.style.transition = `all ${duration}s ease-out`;
+                
+                smoke.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.style.opacity = '0.6';
+                    particle.style.bottom = `${Math.random() * 100 + 50}px`;
+                    particle.style.left = `${posX + (Math.random() * 60 - 30)}px`;
+                }, 50);
+            }
+        }
+        
+        // Launch rocket
+        const rocketContainer = document.getElementById('rocketContainer');
+        const rocket = document.getElementById('rocket');
+        const fire = document.getElementById('fire');
+        const smoke = document.getElementById('smoke');
+        const launchBtn = document.getElementById('launchBtn');
+        const message = document.getElementById('message');
+        const sky = document.getElementById('sky');
+        const space = document.getElementById('space');
+        const ground = document.getElementById('ground');
+        const clouds = document.getElementById('clouds');
+        
+        createStarRain();
+        
+        launchBtn.addEventListener('click', () => {
+            launchBtn.disabled = true;
+            launchBtn.textContent = '3...';
+            
+            setTimeout(() => {
+                launchBtn.textContent = '2...';
+                setTimeout(() => {
+                    launchBtn.textContent = '1...';
+                    setTimeout(() => {
+                        // Activate fire and smoke
+                        fire.style.height = '120px';
+                        fire.style.opacity = '1';
+                        smoke.style.height = '100px';
+                        smoke.style.opacity = '0.6';
+                        createSmokeParticles();
+                        
+                        setTimeout(() => {
+                            // Start launch (first phase - upward movement)
+                            rocketContainer.style.transition = 'bottom 2s ease-in';
+                            rocketContainer.style.bottom = '100vh';
+                            launchBtn.style.opacity = '0';
+                            
+                            // When rocket reaches top, start centering
+                            setTimeout(() => {
+                                // Change transition for smooth centering
+                                rocketContainer.style.transition = 'all 2.5s ease-out';
+                                
+                                // Center vertically and horizontally
+                                rocketContainer.style.bottom = '15%';
+                                rocketContainer.style.transform = 'translateX(-50%) translateY(50%)';
+                                
+                                // Add vibration only during space flight
+                                rocketContainer.classList.add('vibrate');
+                                
+                                // Transition to space view
+                                sky.style.opacity = '0';
+                                ground.style.opacity = '0';
+                                clouds.style.opacity = '0';
+                                space.style.opacity = '1';
+                                starRain.style.opacity = '1';
+                                
+                            }, 2000); // Match this with the rocket's upward transition duration
+
+                            // Add flying smoke
+                            const flyingSmoke = setInterval(() => {
+                                if (parseInt(rocketContainer.style.bottom) < window.innerHeight * 0.9) {
+                                    createSmokeParticles();
+                                } else {
+                                    clearInterval(flyingSmoke);
+                                }
+                            }, 300);
+                            
+                            // Show message
+                            setTimeout(() => {
+                                message.style.opacity = '1';
+                            }, 3500);
+                            
+                        }, 500);
+                    }, 1000);
+                }, 1000);
+            }, 1000);
+        });
+        
+        // Init
+        createClouds();
+    </script>
+</body>
+</html>
