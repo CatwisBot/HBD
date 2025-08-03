@@ -222,7 +222,11 @@ button {
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
   .rocket {
-    width: 50vw;
+    width: 40vw;
+  }
+
+  .rocket-container {
+    bottom: 70px;
   }
 
   .message {
@@ -268,7 +272,7 @@ button {
   }
 
   .rocket {
-    width: 50vw;
+    width: 40vw;
   }
 
   .rocket-container {
